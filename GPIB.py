@@ -12,7 +12,7 @@ class AR488(object):
 		try:
 			self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
 		except:
-			sys.exit("error opening serial port {}".format(port))
+			raise Exception("error opening serial port {}".format(port))
 
 	def __del__(self):
 		self.ser.close()
