@@ -1,4 +1,4 @@
-"""Module providing an interface to the GPIB-USB adapter"""
+"""Module providing an interface to the GPIB-USB and GPIB-Wifi adapter"""
 import time
 import socket
 import serial
