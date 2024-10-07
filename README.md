@@ -1,4 +1,4 @@
-# GPIB
+# gpib_all
 Python module for the AR488 USB-GPIB and WiFi-GPIB converter
 
 # Usage USB-GPIB adapter:
