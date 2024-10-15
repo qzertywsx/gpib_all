@@ -1,4 +1,4 @@
-"""Module providing an interface to the GPIB-USB and GPIB-Wifi adapter"""
+"""Module providing an interface to the GPIB-USB adapter"""
 import time
 import socket
 import serial
@@ -71,6 +71,45 @@ class AR488Base():
         """Return to local mode"""
         self.write("++loc")
 
+    def wait_for_data(self):
+        """Wait for the data to arrive"""
+        return False
+
+    def get_buffer(self,
+                   show_byte=True # pylint: disable=unused-argument
+                  ):
+        """Receive all the data from the instrument"""
+        return False
+
+    def get_plot_buffer(self, show_byte=True):
+        """Get plot data from the instrument (Device-initialed plot)"""
+        _buffer = self.get_buffer(show_byte)
+        if not isinstance(_buffer, bool):
+            return _buffer.decode("UTF-8")
+        return False
+
+    def get_plot_file(self, filename, show_byte=True):
+        """Get plot data from the instrument (Device-initialed plot) (file .plt)"""
+        _buffer = self.get_plot_buffer(show_byte)
+        if isinstance(_buffer, bool):
+            return False
+        with open(filename, "w", encoding="utf-8") as binary_file:
+            binary_file.write(_buffer)
+        return True
+
+    def get_plc_print_buffer(self, show_byte=True):
+        """Get PLC print data from the instrument (Device-initialed print) (file .pcl)"""
+        return self.get_buffer(show_byte)
+
+    def get_plc_print_file(self, filename, show_byte=True):
+        """Get PLC print data from the instrument (Device-initialed print) (file .pcl)"""
+        _buffer = self.get_plc_print_buffer(show_byte)
+        if not isinstance(_buffer, bool):
+            return False
+        with open(filename, "wb") as binary_file:
+            binary_file.write(_buffer)
+        return True
+
 class AR488(AR488Base):
     """Class to represent AR488 USB-GPIB adapter.
     The AR488 is an Arduino-based USB-GPIB adapter.
@@ -109,27 +148,43 @@ class AR488(AR488Base):
         """Receive something from the gpib adapter"""
         return self.ser.readline().decode("UTF-8").strip()
 
-    def read_all(self):
-        """Send something to the gpib adapter"""
-        return self.ser.read_all().decode("UTF-8").strip()
-
-    def read_lines(self):
-        """Send something to the gpib adapter"""
-        tmp = []
-        while self.ser.in_waiting:
-            tmp += self.ser.readline().decode("UTF-8").strip()
-        return tmp
-
     def query(self, message, sleep=0.2):
         """Write message to GPIB bus and read results."""
         self.write(message, sleep)
-        self.wait_data()
+        self.wait_for_data()
         return self.read()
 
-    def wait_data(self):
+    def wait_for_data(self):
         """Wait for the data to arrive"""
+        num_retry = 10
         while not self.ser.in_waiting:
-            pass
+            time.sleep(2)
+            num_retry -= 1
+            if num_retry == 0:
+                return False
+        return True
+
+    def get_buffer(self, show_byte=True):
+        """Receive all the data from the instrument"""
+        _buffer = bytearray()
+        l = 0
+        data = self.wait_for_data()
+        if isinstance(data, bool) and not data:
+            return False
+        while True:
+            try:
+                data = self.ser.read(256)
+            except TimeoutError:
+                break
+            l += len(data)
+            if show_byte:
+                print(f"\r{l}", end="")
+            if not data:
+                break
+            _buffer.extend(data)
+        if show_byte:
+            print()
+        return _buffer
 
 class AR488Wifi(AR488Base):
     """Class to represent AR488 WiFi-GPIB adapter.
@@ -141,8 +196,9 @@ class AR488Wifi(AR488Base):
     def __init__(self, ip, timeout=1, debug=False):
         super().__init__(debug)
         self.ip = ip
+        self.timeout = timeout
         try:
-            socket.setdefaulttimeout(timeout)
+            socket.setdefaulttimeout(self.timeout)
             self.session = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.session.connect((self.ip, 23))
             self.address = self.query("++addr")
@@ -166,6 +222,42 @@ class AR488Wifi(AR488Base):
     def receive(self):
         """Receive something from the gpib adapter"""
         return self.session.recv(1024).decode("UTF-8").strip()
+
+    def wait_for_data(self):
+        """Wait until data arrive"""
+        num_retry = 10
+        while True:
+            try:
+                data = self.session.recv(1024)
+                if data:
+                    return data
+            except TimeoutError:
+                num_retry -= 1
+                if num_retry == 0:
+                    return False
+
+    def get_buffer(self, show_byte=True):
+        """Receive all the data from the instrument"""
+        _buffer = bytearray()
+        l = 0
+        data = self.wait_for_data()
+        if isinstance(data, bool):
+            return False
+        _buffer.extend(data)
+        while True:
+            try:
+                data = self.session.recv(1024)
+            except TimeoutError:
+                break
+            l += len(data)
+            if show_byte:
+                print(f"\r{l}", end="")
+            if not data:
+                break
+            _buffer.extend(data)
+        if show_byte:
+            print()
+        return _buffer
 
     def query(self, message, sleep=0.2):
         """Write message to GPIB bus and read results."""
