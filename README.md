@@ -64,8 +64,8 @@ with `show_byte` you can see on the terminal how many bytes are received
 from gpib_all import AR488
 
 gpib = AR488(port="/dev/ttyACM2", timeout=5)
-print(gpib)
 gpib.set_address(8)
+print(gpib)
 print(gpib.query("++ver"))
 gpib.write("++eor 2")
 gpib.write("*IDN?")
@@ -82,9 +82,9 @@ HEWLETT-PACKARD,54620A,0,A.01.30
 ```python
 from gpib_all import AR488Wifi
 
-gpib = AR488Wifi('192.168.178.36', timeout=5)#, debug=True)
-print(gpib)
+gpib = AR488Wifi('192.168.178.36', timeout=5)
 gpib.set_address(8)
+print(gpib)
 print(gpib.query("++ver"))
 gpib.write("++eor 2")
 gpib.write("*IDN?")
@@ -97,3 +97,30 @@ AR488 GPIB controller, ver. 0.51.29, 18/03/2024
 HEWLETT-PACKARD,54620A,0,A.01.30
 ```
 
+# Usage Wifi-GPIB adapter (with debug enabled):
+```python
+from gpib_all import AR488Wifi
+
+gpib = AR488Wifi('192.168.178.36', timeout=5, debug=True)
+gpib.set_address(8)
+print(gpib)
+print(gpib.query("++ver"))
+gpib.write("++eor 2")
+gpib.write("*IDN?")
+print(gpib.query("++read"))
+```
+Result of executing the above code:
+```
+-> ++addr
+<- '8'
+-> ++addr 8
+GPIB address: 8, IP: 192.168.178.36
+-> ++ver
+<- 'AR488 GPIB controller, ver. 0.51.29, 18/03/2024'
+AR488 GPIB controller, ver. 0.51.29, 18/03/2024
+-> ++eor 2
+-> *IDN?
+-> ++read
+<- 'HEWLETT-PACKARD,54620A,0,A.01.30'
+HEWLETT-PACKARD,54620A,0,A.01.30
+```
