@@ -59,7 +59,7 @@ Get PLC print data from the instrument (Device-initialed print) (file .pcl)
 
 with `show_byte` you can see on the terminal how many bytes are received
 
-# Usage USB-GPIB adapter:
+# Usage of a USB-GPIB adapter:
 ```python
 from gpib_all import AR488
 
@@ -78,7 +78,7 @@ AR488 GPIB controller, ver. 0.51.29, 18/03/2024
 HEWLETT-PACKARD,54620A,0,A.01.30
 ```
 
-# Usage Wifi-GPIB adapter:
+# Usage of a Wifi-GPIB adapter:
 ```python
 from gpib_all import AR488Wifi
 
@@ -97,7 +97,7 @@ AR488 GPIB controller, ver. 0.51.29, 18/03/2024
 HEWLETT-PACKARD,54620A,0,A.01.30
 ```
 
-# Usage Wifi-GPIB adapter (with debug enabled):
+# Usage of a Wifi-GPIB adapter (with debug enabled):
 ```python
 from gpib_all import AR488Wifi
 
