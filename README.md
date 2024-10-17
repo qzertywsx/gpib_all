@@ -39,6 +39,11 @@ Receive all the data from the instrument
 
 with `show_byte` you can see on the terminal how many bytes are received
 
+### get_string(show_byte=True):
+Receive all the data as string from the instrument
+
+with `show_byte` you can see on the terminal how many bytes are received
+
 ### get_plot_buffer(show_byte=True):
 Get plot data from the instrument (Device-initialed plot)
 
