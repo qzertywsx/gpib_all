@@ -68,7 +68,7 @@ with `show_byte` you can see on the terminal how many bytes are received
 ```python
 from gpib_all import AR488
 
-gpib = AR488(port="/dev/ttyACM2", timeout=5)
+gpib = AR488(port="/dev/ttyACM2")
 gpib.set_address(8)
 print(gpib)
 print(gpib.query("++ver"))
@@ -87,7 +87,7 @@ HEWLETT-PACKARD,54620A,0,A.01.30
 ```python
 from gpib_all import AR488Wifi
 
-gpib = AR488Wifi('192.168.178.36', timeout=5)
+gpib = AR488Wifi('192.168.178.36')
 gpib.set_address(8)
 print(gpib)
 print(gpib.query("++ver"))
@@ -106,7 +106,7 @@ HEWLETT-PACKARD,54620A,0,A.01.30
 ```python
 from gpib_all import AR488Wifi
 
-gpib = AR488Wifi('192.168.178.36', timeout=5, debug=True)
+gpib = AR488Wifi('192.168.178.36', debug=True)
 gpib.set_address(8)
 print(gpib)
 print(gpib.query("++ver"))
