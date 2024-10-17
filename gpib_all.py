@@ -39,13 +39,7 @@ class AR488Base():
 
     def read(self):
         """Read from GPIB bus."""
-        try:
-            tmp = self.receive()
-            if self.debug:
-                print("<-", "'"+tmp+"'")
-            return tmp
-        except TimeoutError:
-            return False
+        return self.get_string(show_byte=False)
 
     def query(self, message, sleep=0.2):
         """Write message to GPIB bus and read results."""
@@ -81,6 +75,15 @@ class AR488Base():
         """Receive all the data from the instrument"""
         return False
 
+    def get_string(self,
+                   show_byte=True # pylint: disable=unused-argument
+                  ):
+        """Receive all the data as string from the instrument"""
+        tmp = self.get_buffer(show_byte)
+        if not isinstance(tmp, bool):
+            return tmp.decode("UTF-8").strip()
+        return False
+
     def get_plot_buffer(self, show_byte=True):
         """Get plot data from the instrument (Device-initialed plot)"""
         _buffer = self.get_buffer(show_byte)
@@ -97,13 +100,13 @@ class AR488Base():
             binary_file.write(_buffer)
         return True
 
-    def get_plc_print_buffer(self, show_byte=True):
+    def get_pcl_print_buffer(self, show_byte=True):
         """Get PLC print data from the instrument (Device-initialed print) (file .pcl)"""
         return self.get_buffer(show_byte)
 
-    def get_plc_print_file(self, filename, show_byte=True):
+    def get_pcl_print_file(self, filename, show_byte=True):
         """Get PLC print data from the instrument (Device-initialed print) (file .pcl)"""
-        _buffer = self.get_plc_print_buffer(show_byte)
+        _buffer = self.get_pcl_print_buffer(show_byte)
         if not isinstance(_buffer, bool):
             return False
         with open(filename, "wb") as binary_file:
@@ -116,7 +119,7 @@ class AR488(AR488Base):
     For details see: https://github.com/Twilight-Logic/AR488
     """
 
-    def __init__(self, port="/dev/ttyACM3", baudrate=115200, timeout=1, debug=False):
+    def __init__(self, port="/dev/ttyACM3", baudrate=115200, timeout=.2, debug=False):
         super().__init__(debug)
         try:
             self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
@@ -151,14 +154,13 @@ class AR488(AR488Base):
     def query(self, message, sleep=0.2):
         """Write message to GPIB bus and read results."""
         self.write(message, sleep)
-        self.wait_for_data()
         return self.read()
 
     def wait_for_data(self):
         """Wait for the data to arrive"""
-        num_retry = 10
+        num_retry = 15
         while not self.ser.in_waiting:
-            time.sleep(2)
+            time.sleep(1)
             num_retry -= 1
             if num_retry == 0:
                 return False
@@ -193,7 +195,7 @@ class AR488Wifi(AR488Base):
     and: https://github.com/jeelabs/esp-link
     """
 
-    def __init__(self, ip, timeout=1, debug=False):
+    def __init__(self, ip, timeout=.2, debug=False):
         super().__init__(debug)
         self.ip = ip
         self.timeout = timeout
@@ -225,13 +227,14 @@ class AR488Wifi(AR488Base):
 
     def wait_for_data(self):
         """Wait until data arrive"""
-        num_retry = 10
+        num_retry = 15
         while True:
             try:
                 data = self.session.recv(1024)
                 if data:
                     return data
             except TimeoutError:
+                time.sleep(1)
                 num_retry -= 1
                 if num_retry == 0:
                     return False
